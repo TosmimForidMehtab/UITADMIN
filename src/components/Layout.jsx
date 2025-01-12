@@ -1,64 +1,143 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import {
+	AppBar,
+	Toolbar,
+	IconButton,
+	Typography,
+	Drawer,
+	List,
+	ListItem,
+	ListItemIcon,
+	ListItemText,
+	Button,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import MenuIcon from "@mui/icons-material/Menu";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import PeopleIcon from "@mui/icons-material/People";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import WalletIcon from "@mui/icons-material/AccountBalanceWallet";
+
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+	backgroundColor: theme.palette.grey[200],
+	color: theme.palette.text.primary,
+}));
+
+const StyledToolbar = styled(Toolbar)({
+	display: "flex",
+	justifyContent: "space-between",
+});
+
+const Logo = styled(Typography)(({ theme }) => ({
+	fontWeight: "bold",
+	color: theme.palette.primary.main,
+	padding: theme.spacing(1),
+	border: `2px solid ${theme.palette.primary.main}`,
+	borderRadius: "50%",
+}));
+
+const NavButton = styled(Button)(({ theme }) => ({
+	marginLeft: theme.spacing(2),
+}));
 
 const Layout = ({ children }) => {
-  const { user, logout } = useAuth();
+	const { user, logout } = useAuth();
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-gray-200 shadow-sm sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <Link to="/" className="flex-shrink-0 flex items-center">
-                <div className="rounded-full border-2 border-white shadow  p-2">
-                <h3 className='text-2xl font-bold text-indigo-600'>UIT</h3>
-                </div>
-              </Link>
-            </div>
-            <div className="flex items-center">
-              {user ? (
-                <>
-                  {user.role === 'ADMIN' && (
-                    <Link
-                      to="/dashboard"
-                      className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      Dashboard
-                    </Link>
-                  )}
-                  <button
-                    onClick={logout}
-                    className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/signin"
-                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-      <main className='max-w-7xl mx-auto px-4 sm:px-0'>{children}</main>
-    </div>
-  );
+	const handleLogout = () => {
+		logout();
+		setIsDrawerOpen(false);
+		navigate("/");
+	};
+
+	const drawerItems = [
+		{ text: "Users", icon: <PeopleIcon />, path: "/dashboard" },
+		{ text: "Transactions", icon: <ReceiptIcon />, path: "/transactions" },
+		{ text: "Wallet", icon: <WalletIcon />, path: "/wallet" },
+	];
+
+	return (
+		<div className="min-h-screen bg-gray-50">
+			<StyledAppBar position="sticky" elevation={1}>
+				<StyledToolbar>
+					<div className="flex items-center">
+						{user && (
+							<IconButton
+								edge="start"
+								color="inherit"
+								aria-label="menu"
+								onClick={() => setIsDrawerOpen(true)}
+							>
+								<MenuIcon />
+							</IconButton>
+						)}
+					</div>
+					<div>
+						{!user && (
+							<>
+								<NavButton
+									component={Link}
+									to="/signin"
+									color="inherit"
+								>
+									Sign In
+								</NavButton>
+								<NavButton
+									component={Link}
+									to="/signup"
+									variant="contained"
+									color="primary"
+								>
+									Sign Up
+								</NavButton>
+							</>
+						)}
+					</div>
+					<Link to={"/"}>
+						<Logo variant="h6">UIT</Logo>
+					</Link>
+				</StyledToolbar>
+			</StyledAppBar>
+			<Drawer
+				anchor="left"
+				open={isDrawerOpen}
+				onClose={() => setIsDrawerOpen(false)}
+			>
+				<List className="w-64">
+					{drawerItems.map((item) => (
+						<ListItem
+							button
+							key={item.text}
+							component={Link}
+							to={item.path}
+							onClick={() => setIsDrawerOpen(false)}
+						>
+							<ListItemIcon>{item.icon}</ListItemIcon>
+							<ListItemText primary={item.text} />
+						</ListItem>
+					))}
+					<ListItem
+						button
+						onClick={handleLogout}
+						className="cursor-pointer"
+					>
+						<ListItemIcon>
+							<ExitToAppIcon />
+						</ListItemIcon>
+						<ListItemText primary="Logout" />
+					</ListItem>
+				</List>
+			</Drawer>
+
+			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+				{children}
+			</main>
+		</div>
+	);
 };
 
 export default Layout;
-

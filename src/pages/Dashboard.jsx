@@ -1,67 +1,99 @@
-import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import { ClipLoader } from 'react-spinners';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { DataGrid } from "@mui/x-data-grid";
+import { Typography, Paper } from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { ClipLoader } from "react-spinners";
+
 const host = import.meta.env.VITE_API_URL;
+
+const theme = createTheme();
+
 const Dashboard = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+	const [users, setUsers] = useState([]);
+	const [loading, setLoading] = useState(true);
 
-  function formatDate(dateString) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  }
+	useEffect(() => {
+		const fetchUsers = async () => {
+			try {
+				const response = await axios.get(`${host}/users`, {
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem(
+							"token"
+						)}`,
+					},
+				});
+				const data = response.data;
+				setUsers(
+					data?.data.map((user) => ({
+						id: user._id,
+						...user,
+					}))
+				);
+				setLoading(false);
+			} catch (error) {
+				console.error("Error fetching users:", error);
+				setLoading(false);
+			}
+		};
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const response = await axios.get(`${host}/users`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        }
-      });
-      const data = response.data;
-      setUsers(data?.data);
-      setLoading(false);
-    };
+		fetchUsers();
+	}, []);
 
-    fetchUsers();
-  }, []);
+	const columns = [
+		{ field: "email", headerName: "Email", flex: 1 },
+		{
+			field: "createdAt",
+			headerName: "Registered On",
+			flex: 1,
+			valueGetter: (params) => {
+				return new Date(params);
+			},
+			valueFormatter: (params) => {
+				const options = {
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				};
+				return params?.toLocaleDateString(undefined, options);
+			},
+		},
+	];
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <ClipLoader color="#4F46E5" size={50} />
-      </div>
-    );
-  }
+	if (loading) {
+		return (
+			<div className="flex justify-center items-center h-screen">
+				<ClipLoader color="#4F46E5" size={50} />
+			</div>
+		);
+	}
 
-  return (
-    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Registered On
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(user.createdAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+	return (
+		<ThemeProvider theme={theme}>
+			<div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+				<Typography
+					variant="h4"
+					component="h1"
+					gutterBottom
+					className="text-gray-900 font-bold text-center"
+				>
+					Dashboard
+				</Typography>
+				<Paper elevation={3} className="overflow-hidden">
+					<div style={{ height: 400, width: "100%" }}>
+						<DataGrid
+							rows={users}
+							columns={columns}
+							pageSize={10}
+							rowsPerPageOptions={[5, 10, 20]}
+							disableSelectionOnClick
+							disableRowSelectionOnClick
+						/>
+					</div>
+				</Paper>
+			</div>
+		</ThemeProvider>
+	);
 };
 
 export default Dashboard;
-
