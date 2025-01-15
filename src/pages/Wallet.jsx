@@ -32,9 +32,38 @@ const Wallet = () => {
 		setUpi(event.target.value);
 	};
 
-	const handleSave = () => {
-		setIsEditing(false);
-		console.log("Saving wallet data:", walletData);
+	const handleSave = async () => {
+		try {
+			setIsEditing(false);
+			const updateDenomination = async (field) => {
+				return axios.patch(
+					`${host}/wallet/denominations`,
+					{
+						id: denominations?.[field]?._id,
+						amount: denominations?.[field]?.amount,
+					},
+					{
+						headers: {
+							Authorization: `Bearer ${localStorage.getItem(
+								"token"
+							)}`,
+						},
+					}
+				);
+			};
+
+			const responses = await Promise.all([
+				updateDenomination("field1"),
+				updateDenomination("field2"),
+				updateDenomination("field3"),
+				updateDenomination("field4"),
+			]);
+			toast.success("Amount saved successfully");
+			await fetchDenominations();
+		} catch (error) {
+			console.error("Error saving wallet:", error);
+			toast.error("Error saving wallet");
+		}
 	};
 
 	const handleSaveUPI = async () => {
