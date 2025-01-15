@@ -8,9 +8,11 @@ import {
 	Modal,
 	TextField,
 	Box,
+	Tooltip,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { ClipLoader } from "react-spinners";
+import { toast } from "react-toastify";
 
 const host = import.meta.env.VITE_API_URL;
 
@@ -23,40 +25,53 @@ const TransactionsTable = () => {
 	const [selectedTransaction, setSelectedTransaction] = useState(null);
 	const [rejectionComment, setRejectionComment] = useState("");
 
+	const fetchTransactions = async () => {
+		try {
+			const response = await axios.get(`${host}/transactions/all`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+			});
+			const data = response.data;
+			setTransactions(
+				data?.data.map((transaction) => ({
+					id: transaction._id,
+					...transaction,
+					email: transaction.user.email,
+				}))
+			);
+			setLoading(false);
+		} catch (error) {
+			console.error("Error fetching transactions:", error);
+			setLoading(false);
+		}
+	};
 	useEffect(() => {
-		const fetchTransactions = async () => {
-			try {
-				const response = await axios.get(`${host}/transactions/all`, {
+		fetchTransactions();
+	}, []);
+
+	const handleAccept = async (id) => {
+		try {
+			const response = await axios.patch(
+				`${host}/transactions`,
+				{
+					transactionId: id,
+					status: "COMPLETED",
+				},
+				{
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem(
 							"token"
 						)}`,
 					},
-				});
-				const data = response.data;
-				setTransactions(
-					data?.data.map((transaction) => ({
-						id: transaction._id,
-						...transaction,
-						email: transaction.user.email,
-					}))
-				);
-				setLoading(false);
-			} catch (error) {
-				console.error("Error fetching transactions:", error);
-				setLoading(false);
-			}
-		};
-
-		fetchTransactions();
-	}, []);
-
-	const handleAccept = (id) => {
-		setTransactions(
-			transactions.map((t) =>
-				t.id === id ? { ...t, status: "accepted" } : t
-			)
-		);
+				}
+			);
+			toast.success("Transaction updated successfully");
+			await fetchTransactions();
+		} catch (error) {
+			toast.error("Error updating transaction");
+			console.log("Error upating transaction");
+		}
 	};
 
 	const handleDeny = (transaction) => {
@@ -70,19 +85,31 @@ const TransactionsTable = () => {
 		setRejectionComment("");
 	};
 
-	const handleRejectionSubmit = () => {
-		setTransactions(
-			transactions.map((t) =>
-				t.id === selectedTransaction.id
-					? {
-							...t,
-							status: "denied",
-							rejectionReason: rejectionComment,
-					  }
-					: t
-			)
-		);
-		handleModalClose();
+	const handleRejectionSubmit = async (id) => {
+		try {
+			const response = await axios.patch(
+				`${host}/transactions`,
+				{
+					transactionId: selectedTransaction?.transactionId,
+					status: "DENIED",
+					reason: rejectionComment,
+				},
+				{
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem(
+							"token"
+						)}`,
+					},
+				}
+			);
+			toast.success("Transaction updated successfully");
+			await fetchTransactions();
+		} catch (error) {
+			toast.error("Error updating transaction");
+			console.log("Error upating transaction");
+		} finally {
+			handleModalClose();
+		}
 	};
 
 	const columns = [
@@ -122,23 +149,33 @@ const TransactionsTable = () => {
 						variant="contained"
 						color="primary"
 						size="small"
-						onClick={() => handleAccept(params.row.id)}
+						onClick={() => handleAccept(params.row.transactionId)}
 						disabled={params.row.status !== "PENDING"}
 						style={{ marginRight: "8px" }}
 					>
-						{params.row.status === "accepted"
+						{params.row.status === "COMPLETED"
 							? "Accepted"
 							: "Accept"}
 					</Button>
-					<Button
-						variant="contained"
-						color="secondary"
-						size="small"
-						onClick={() => handleDeny(params.row)}
-						disabled={params.row.status !== "PENDING"}
+					<Tooltip
+						title={params.row?.reason || ""}
+						sx={{ padding: 5 }}
+						placement="top"
 					>
-						{params.row.status === "denied" ? "Denied" : "Deny"}
-					</Button>
+						<div style={{ display: "inline-block" }}>
+							<Button
+								variant="contained"
+								color="secondary"
+								size="small"
+								onClick={() => handleDeny(params.row)}
+								disabled={params.row.status !== "PENDING"}
+							>
+								{params.row.status === "DENIED"
+									? "Denied"
+									: "Deny"}
+							</Button>
+						</div>
+					</Tooltip>
 				</div>
 			),
 		},

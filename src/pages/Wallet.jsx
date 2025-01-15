@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Typography, TextField, Button, Paper, Grid, Box } from "@mui/material";
+import axios from "axios";
+import { toast } from "react-toastify";
+const host = import.meta.env.VITE_API_URL;
 
 const Wallet = () => {
 	const [isEditing, setIsEditing] = useState(false);
@@ -11,9 +14,22 @@ const Wallet = () => {
 		field4: "2000",
 		upiId: "test@upi",
 	});
+	const [denominations, setDenominations] = useState({
+		field1: {},
+		field2: {},
+		field3: {},
+		field4: {},
+	});
+	const [upi, setUpi] = useState("");
 
 	const handleChange = (field) => (event) => {
-		setWalletData({ ...walletData, [field]: event.target.value });
+		setDenominations({
+			...denominations,
+			[field]: { ...denominations[field], amount: event.target.value },
+		});
+	};
+	const handleUpiChange = (event) => {
+		setUpi(event.target.value);
 	};
 
 	const handleSave = () => {
@@ -21,10 +37,77 @@ const Wallet = () => {
 		console.log("Saving wallet data:", walletData);
 	};
 
-	const handleSaveUPI = () => {
-		setIsEditingUPI(false);
-		console.log("Saving UPI ID:", walletData.upiId);
+	const handleSaveUPI = async () => {
+		try {
+			setIsEditingUPI(false);
+			const response = await axios.post(
+				`${host}/wallet/upi`,
+				{ upiId: upi },
+				{
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem(
+							"token"
+						)}`,
+					},
+				}
+			);
+			toast.success("UPI ID saved successfully");
+			await fetchUpi();
+		} catch (error) {
+			console.error("Error saving wallet:", error);
+			toast.error("Error saving wallet");
+		}
 	};
+
+	const fetchUpi = async () => {
+		try {
+			const response = await axios.get(`${host}/wallet/upi`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+			});
+			const { data } = response.data;
+			setUpi(data?.upiId || "");
+		} catch (error) {
+			console.error("Error fetching wallet:", error);
+		}
+	};
+
+	const fetchDenominations = async () => {
+		try {
+			const response = await axios.get(`${host}/wallet/denominations`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+			});
+			let { data } = response.data;
+			data = data?.sort((a, b) => a.amount - b.amount);
+			setDenominations({
+				field1:
+					data?.length > 0
+						? { amount: data[0].amount, _id: data[0]._id }
+						: {},
+				field2:
+					data?.length > 1
+						? { amount: data[1].amount, _id: data[1]._id }
+						: {},
+				field3:
+					data?.length > 2
+						? { amount: data[2].amount, _id: data[2]._id }
+						: {},
+				field4:
+					data?.length > 3
+						? { amount: data[3].amount, _id: data[3]._id }
+						: {},
+			});
+		} catch (error) {
+			console.error("Error fetching wallet:", error);
+		}
+	};
+	useEffect(() => {
+		fetchUpi();
+		fetchDenominations();
+	}, []);
 
 	return (
 		<Paper elevation={3} className="p-6">
@@ -37,17 +120,19 @@ const Wallet = () => {
 				Wallet
 			</Typography>
 			<Grid container spacing={3}>
-				{["field1", "field2", "field3", "field4"].map((field) => (
-					<Grid item xs={12} sm={6} key={field}>
-						<TextField
-							fullWidth
-							label={`Field ${field.slice(-1)}`}
-							value={walletData[field]}
-							onChange={handleChange(field)}
-							disabled={!isEditing}
-						/>
-					</Grid>
-				))}
+				{["field1", "field2", "field3", "field4"].map(
+					(field, index) => (
+						<Grid item xs={12} sm={6} key={field}>
+							<TextField
+								fullWidth
+								label={`Field ${index + 1} Amount`}
+								value={denominations[field].amount || ""}
+								onChange={handleChange(field)}
+								disabled={!isEditing}
+							/>
+						</Grid>
+					)
+				)}
 			</Grid>
 			<Box mt={3}>
 				<Button
@@ -64,8 +149,8 @@ const Wallet = () => {
 				<TextField
 					fullWidth
 					label="UPI ID"
-					value={walletData.upiId}
-					onChange={handleChange("upiId")}
+					value={upi}
+					onChange={handleUpiChange}
 					disabled={!isEditingUPI}
 				/>
 			</Box>
