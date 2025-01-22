@@ -14,6 +14,7 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import TransactionsTable from "./pages/Transactions";
 import Wallet from "./pages/Wallet";
+import Plans from "./components/Plans";
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
 	const { user, loading } = useAuth();
@@ -59,6 +60,14 @@ const App = () => {
 							element={
 								<ProtectedRoute adminOnly>
 									<Wallet />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/plans"
+							element={
+								<ProtectedRoute adminOnly>
+									<Plans />
 								</ProtectedRoute>
 							}
 						/>

@@ -20,6 +20,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import WalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
 	backgroundColor: theme.palette.grey[200],
@@ -58,6 +59,7 @@ const Layout = ({ children }) => {
 		{ text: "Users", icon: <PeopleIcon />, path: "/dashboard" },
 		{ text: "Transactions", icon: <ReceiptIcon />, path: "/transactions" },
 		{ text: "Wallet", icon: <WalletIcon />, path: "/wallet" },
+		{ text: "Plans", icon: <CurrencyRupeeIcon />, path: "/plans" },
 	];
 
 	return (
