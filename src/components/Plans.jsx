@@ -120,6 +120,10 @@ const AddPlanModal = ({ open, handleClose, handleAddPlan }) => {
 			price: Number.parseFloat(price),
 			duration: Number(duration),
 		});
+		setName("");
+		setDescription("");
+		setPrice("");
+		setDuration("");
 		handleClose();
 	};
 
