@@ -15,6 +15,7 @@ import {
 	Chip,
 	TextField,
 } from "@mui/material";
+import { Delete } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
@@ -42,12 +43,11 @@ const PlanCard = ({
 			<Button
 				label="Delete Plan"
 				color="error"
-				variant="outlined"
 				size="small"
 				sx={{
 					marginTop: 2,
-					maxWidth: "50%",
-					marginX: "auto",
+					maxWidth: "20%",
+					marginLeft: "5%",
 				}}
 				onClick={() => {
 					setPlanToDelete(plan);
@@ -55,7 +55,7 @@ const PlanCard = ({
 				}}
 				className="hover:bg-red-500 hover:text-white"
 			>
-				Delete Plan
+				{<Delete />}
 			</Button>
 
 			<CardContent className="flex-grow flex flex-col justify-between p-6">
@@ -79,7 +79,7 @@ const PlanCard = ({
 								component="span"
 								className="text-gray-500"
 							>
-								/{plan.duration} month
+								/{plan.duration} day
 								{plan.duration > 1 ? "s" : ""}
 							</Typography>
 						)}
@@ -246,7 +246,7 @@ export default function Plans() {
 	const fetchPlans = async () => {
 		try {
 			const res = await axios.get(`${host}/plans`);
-			setPlans(res?.data?.data);
+			setPlans(res?.data?.data?.plans);
 		} catch (err) {
 			setError("Failed to load plans. Please try again later.");
 		} finally {
