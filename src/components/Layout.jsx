@@ -59,7 +59,6 @@ const Layout = ({ children }) => {
 		{ text: "Users", icon: <PeopleIcon />, path: "/dashboard" },
 		{ text: "Transactions", icon: <ReceiptIcon />, path: "/transactions" },
 		{ text: "Wallet", icon: <WalletIcon />, path: "/wallet" },
-		{ text: "Plans", icon: <CurrencyRupeeIcon />, path: "/plans" },
 	];
 
 	return (

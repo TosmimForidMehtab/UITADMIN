@@ -14,6 +14,7 @@ import {
 	Box,
 	Chip,
 	TextField,
+	MenuItem,
 } from "@mui/material";
 import { Delete } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
@@ -40,26 +41,43 @@ const PlanCard = ({
 			}`}
 			elevation={isPopular ? 8 : 2}
 		>
-			<Button
-				label="Delete Plan"
-				color="error"
-				size="small"
-				sx={{
-					marginTop: 2,
-					maxWidth: "20%",
-					marginLeft: "5%",
-				}}
-				onClick={() => {
-					setPlanToDelete(plan);
-					setOpenDeleteModal(true);
-				}}
-				className="hover:bg-red-500 hover:text-white"
-			>
-				{<Delete />}
-			</Button>
+			<Box className="flex justify-center items-center">
+				<Button
+					label="Delete Plan"
+					color="error"
+					size="small"
+					sx={{
+						marginTop: 2,
+						maxWidth: "20%",
+						marginLeft: "5%",
+					}}
+					onClick={() => {
+						setPlanToDelete(plan);
+						setOpenDeleteModal(true);
+					}}
+					className="hover:bg-red-500 hover:text-white"
+				>
+					{<Delete />}
+				</Button>
+
+				<Chip
+					label={plan.type}
+					color="primary"
+					variant="outlined"
+					size="small"
+					className="mt-3 w-[50%] mx-auto"
+				/>
+			</Box>
 
 			<CardContent className="flex-grow flex flex-col justify-between p-6">
 				<div>
+					<div className="w-20 h-20 mx-auto mb-4">
+						<img
+							src={plan.logo || "/placeholder.svg"}
+							alt={plan.name}
+							className="w-full h-full object-cover rounded-full"
+						/>
+					</div>
 					<Typography
 						variant="h4"
 						component="h2"
@@ -90,6 +108,24 @@ const PlanCard = ({
 					>
 						{plan.description}
 					</Typography>
+					<div className="space-y-2 mb-6">
+						<div className="flex justify-between">
+							<span>Return Percentage:</span>
+							<span className="font-semibold">
+								{plan.returnPercentage}%
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span>Total Return Amount:</span>
+							<span className="font-semibold">
+								₹
+								{plan.totalReturnAmount ||
+									Number(plan.price * plan.returnPercentage) /
+										100 +
+										Number(plan.price)}
+							</span>
+						</div>
+					</div>
 				</div>
 				<Button
 					variant="contained"
@@ -111,19 +147,34 @@ const AddPlanModal = ({ open, handleClose, handleAddPlan }) => {
 	const [description, setDescription] = useState("");
 	const [price, setPrice] = useState("");
 	const [duration, setDuration] = useState("");
+	const [type, setType] = useState("RUNNING");
+	const [returnPercent, setReturnPercent] = useState("");
+	const [image, setImage] = useState(null);
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		handleAddPlan({
-			name,
-			description,
-			price: Number.parseFloat(price),
-			duration: Number(duration),
-		});
+		const formData = new FormData();
+		formData.append("name", name);
+		formData.append("description", description);
+		formData.append("price", price);
+		formData.append("duration", duration);
+		formData.append("type", type);
+		formData.append("returnPercentage", returnPercent);
+		formData.append("logo", image);
+		handleAddPlan(formData);
+		// handleAddPlan({
+		// 	name,
+		// 	description,
+		// 	price: Number.parseFloat(price),
+		// 	duration: Number(duration),
+		// });
 		setName("");
 		setDescription("");
 		setPrice("");
 		setDuration("");
+		setType("RUNNING");
+		setReturnPercent("");
+		setImage(null);
 		handleClose();
 	};
 
@@ -180,6 +231,41 @@ const AddPlanModal = ({ open, handleClose, handleAddPlan }) => {
 						required
 						className="bg-gray-50"
 					/>
+					<TextField
+						margin="dense"
+						label="Return Percent"
+						type="number"
+						fullWidth
+						variant="outlined"
+						value={returnPercent}
+						onChange={(e) => setReturnPercent(e.target.value)}
+						required
+						className="bg-gray-50"
+					/>
+					{/* Image */}
+					<input
+						type="file"
+						accept="image/*"
+						onChange={(e) => setImage(e.target.files[0])}
+						id="icon-button-file"
+					/>
+					<TextField
+						margin="dense"
+						label="Type"
+						select
+						fullWidth
+						variant="outlined"
+						value={type}
+						onChange={(e) => setType(e.target.value)}
+						required
+						className="bg-gray-50"
+					>
+						{["RUNNING", "UPCOMING", "EXPIRED"].map((option) => (
+							<MenuItem key={option} value={option}>
+								{option}
+							</MenuItem>
+						))}
+					</TextField>
 				</DialogContent>
 				<DialogActions className="p-4">
 					<Button onClick={handleClose} className="text-gray-600">
